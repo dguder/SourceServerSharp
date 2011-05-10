@@ -1,0 +1,11 @@
+obj
+bin
+Bin
+.svn
+*.user
+*.suo
+_ReSharper.*
+*.ReSharper*
+*.Cache
+*.cache
+~$*
