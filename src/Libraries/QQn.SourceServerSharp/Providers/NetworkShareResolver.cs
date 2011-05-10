@@ -14,9 +14,9 @@ namespace QQn.SourceServerSharp.Providers
 		}
 		public override void WriteEnvironment(StreamWriter writer)
 		{
-			writer.WriteLine("SRCSRVSRC=\"%artifact_src_path%\\%var2%\\%fnfile%(%var1%)\"");
+			writer.WriteLine("SRCSRVSRC=%artifact_src_path%\\%var2%\\%fnfile%(%var1%)");
 			writer.WriteLine("SRCSRVTRG=%targ%\\%var2%\\%fnfile%(%var1%)");
-			writer.WriteLine("SRCSRVCMD=cmd.exe /c copy /y %srcsrvsrc% %srcsrvtrg%");
+			writer.WriteLine("SRCSRVCMD=cmd.exe /c copy /y \"%srcsrvsrc%\" %srcsrvtrg%");
 		}
 		public override bool Available
 		{
