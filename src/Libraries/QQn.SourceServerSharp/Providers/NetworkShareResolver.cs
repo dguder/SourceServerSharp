@@ -51,6 +51,10 @@ namespace QQn.SourceServerSharp.Providers
 			this.filename = filename;
 			this.hash = FormatHash(ComputeHash(filename));
 
+			var devEnvironment = Environment.GetEnvironmentVariable("target_env") ?? string.Empty;
+			if (devEnvironment.ToLowerInvariant() == "dev")
+				return;
+
 			var replicationPath = Environment.GetEnvironmentVariable("artifact_src_path");
 			if (!string.IsNullOrEmpty(replicationPath))
 				this.outputPath = Path.Combine(replicationPath, hash, Path.GetFileName(filename) ?? string.Empty);
