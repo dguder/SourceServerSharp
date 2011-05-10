@@ -1,7 +1,9 @@
 namespace QQn.SourceServerSharp.Providers
 {
 	using System;
+	using System.Collections.Generic;
 	using System.IO;
+	using System.Linq;
 	using System.Security.Cryptography;
 	using Framework;
 
@@ -24,11 +26,11 @@ namespace QQn.SourceServerSharp.Providers
 		}
 		public bool CanProvideSources(IndexerState state)
 		{
-			return true;
+			return state.SourceFiles.Any(x => File.Exists(x.Key));
 		}
 		public override bool ResolveFiles()
 		{
-			foreach (var file in this.State.SourceFiles)
+			foreach (var file in this.State.SourceFiles.Where(x => File.Exists(x.Key)))
 				file.Value.SourceReference = new NetworkShareSourceReference(this, file.Key);
 
 			return true;
@@ -41,6 +43,7 @@ namespace QQn.SourceServerSharp.Providers
 
 	public class NetworkShareSourceReference : SourceReference
 	{
+		private static readonly ICollection<string> Replicated = new HashSet<string>();
 		private readonly string outputPath;
 		private readonly string filename;
 		private readonly string hash;
@@ -82,6 +85,11 @@ namespace QQn.SourceServerSharp.Providers
 		{
 			if (string.IsNullOrEmpty(this.outputPath))
 				return;
+
+			if (Replicated.Contains(this.hash))
+				return;
+
+			Replicated.Add(this.hash);
 
 			var directory = Path.GetDirectoryName(this.outputPath) ?? string.Empty;
 			Directory.CreateDirectory(directory);
