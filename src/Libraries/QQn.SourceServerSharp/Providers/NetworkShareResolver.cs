@@ -7,9 +7,10 @@ namespace QQn.SourceServerSharp.Providers
 	using System.Security.Cryptography;
 	using Framework;
 
-	public class NetworkShareResolver : SourceResolver,
-		ISourceProviderDetector
+	public class NetworkShareResolver : SourceResolver, ISourceProviderDetector
 	{
+		private static readonly ICollection<string> Handled = new HashSet<string>();
+
 		public NetworkShareResolver(IndexerState state)
 			: base(state, "NetworkShare")
 		{
@@ -30,8 +31,11 @@ namespace QQn.SourceServerSharp.Providers
 		}
 		public override bool ResolveFiles()
 		{
-			foreach (var file in this.State.SourceFiles.Where(x => File.Exists(x.Key)))
+			foreach (var file in this.State.SourceFiles.Where(x => !Handled.Contains(x.Key) && File.Exists(x.Key)))
+			{
+				Handled.Add(file.Key);
 				file.Value.SourceReference = new NetworkShareSourceReference(this, file.Key);
+			}
 
 			return true;
 		}

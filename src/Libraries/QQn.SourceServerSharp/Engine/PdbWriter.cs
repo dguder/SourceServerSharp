@@ -21,6 +21,7 @@ namespace QQn.SourceServerSharp.Engine
 		{
 			foreach (SymbolFile file in state.SymbolFiles.Values)
 			{
+				Console.WriteLine("Indexing " + file.File.FullName);
 				string tmpFile = Path.GetFullPath(Path.GetTempFileName());
 				try
 				{
