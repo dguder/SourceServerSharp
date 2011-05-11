@@ -332,7 +332,6 @@ namespace QQn.SourceServerSharp
 							continue; // Root found
 
 						sf.NoSourceAvailable = true;
-						continue;
 					}
 					else
 						sf.NoSourceAvailable = true;
