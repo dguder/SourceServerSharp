@@ -9,7 +9,8 @@ namespace QQn.SourceServerSharp.Providers
 
 	public class NetworkShareResolver : SourceResolver, ISourceProviderDetector
 	{
-		private static readonly ICollection<string> Handled = new HashSet<string>();
+		private static readonly IDictionary<string, SourceReference> References =
+			new Dictionary<string, SourceReference>();
 
 		public NetworkShareResolver(IndexerState state)
 			: base(state, "NetworkShare")
@@ -17,7 +18,7 @@ namespace QQn.SourceServerSharp.Providers
 		}
 		public override void WriteEnvironment(StreamWriter writer)
 		{
-			writer.WriteLine("SRCSRVSRC=%artifact_src_path%\\%var2%\\%fnfile%(%var1%)");
+			writer.WriteLine("SRCSRVSRC=%published_artifacts_src%\\%var2%\\%fnfile%(%var1%)");
 			writer.WriteLine("SRCSRVTRG=%targ%\\%var2%\\%fnfile%(%var1%)");
 			writer.WriteLine("SRCSRVCMD=cmd.exe /c copy /y \"%srcsrvsrc%\" %srcsrvtrg%");
 		}
@@ -31,14 +32,20 @@ namespace QQn.SourceServerSharp.Providers
 		}
 		public override bool ResolveFiles()
 		{
-			foreach (var file in this.State.SourceFiles.Where(x => !Handled.Contains(x.Key) && File.Exists(x.Key)))
-			{
-				Handled.Add(file.Key);
-				file.Value.SourceReference = new NetworkShareSourceReference(this, file.Key);
-			}
+			foreach (var file in this.State.SourceFiles.Where(x => File.Exists(x.Key)))
+				file.Value.SourceReference = this.ResolveReference(file.Key);
 
 			return true;
 		}
+		private SourceReference ResolveReference(string filename)
+		{
+			SourceReference resolved;
+			if (!References.TryGetValue(filename, out resolved))
+				References[filename] = resolved = new NetworkShareSourceReference(this, filename);
+
+			return resolved;
+		}
+
 		public override int SourceEntryVariableCount
 		{
 			get { return 2; }
@@ -47,8 +54,6 @@ namespace QQn.SourceServerSharp.Providers
 
 	public class NetworkShareSourceReference : SourceReference
 	{
-		private static readonly ICollection<string> Replicated = new HashSet<string>();
-		private readonly string outputPath;
 		private readonly string filename;
 		private readonly string hash;
 
@@ -57,14 +62,7 @@ namespace QQn.SourceServerSharp.Providers
 		{
 			this.filename = filename;
 			this.hash = FormatHash(ComputeHash(filename));
-
-			var devEnvironment = Environment.GetEnvironmentVariable("target_env") ?? string.Empty;
-			if (devEnvironment.ToLowerInvariant() == "dev")
-				return;
-
-			var replicationPath = Environment.GetEnvironmentVariable("artifact_src_path");
-			if (!string.IsNullOrEmpty(replicationPath))
-				this.outputPath = Path.Combine(replicationPath, hash, Path.GetFileName(filename) ?? string.Empty);
+			this.CopyToDestination();
 		}
 		private static byte[] ComputeHash(string filename)
 		{
@@ -79,29 +77,25 @@ namespace QQn.SourceServerSharp.Providers
 			return hash.Substring(0, 3) + "\\" + hash.Substring(3, 3) + "\\" + hash.Substring(6);
 		}
 
+		private void CopyToDestination()
+		{
+			var replicationPath = Environment.GetEnvironmentVariable("published_artifacts_src");
+			if (string.IsNullOrEmpty(replicationPath))
+				return;
+
+			var destination = Path.Combine(replicationPath, hash, Path.GetFileName(filename) ?? string.Empty);
+			if (File.Exists(destination))
+				return;
+
+			Console.WriteLine(string.Format("Replicating '{0}' to '{1}'.", this.filename, destination));
+			var directory = Path.GetDirectoryName(destination) ?? string.Empty;
+			Directory.CreateDirectory(directory);
+			File.Copy(this.filename, destination, true);
+		}
+
 		public override string[] GetSourceEntries()
 		{
-			Replicate();
-
 			return new[] { this.filename, hash };
-		}
-		private void Replicate()
-		{
-			if (string.IsNullOrEmpty(this.outputPath))
-				return;
-
-			if (Replicated.Contains(this.hash))
-				return;
-
-			Replicated.Add(this.hash);
-
-			var directory = Path.GetDirectoryName(this.outputPath) ?? string.Empty;
-			Directory.CreateDirectory(directory);
-			if (File.Exists(this.outputPath))
-				return;
-
-			Console.WriteLine(string.Format("Replicating '{0}' to '{1}'.", this.filename, this.outputPath));
-			File.Copy(this.filename, this.outputPath, true);
 		}
 	}
 }
