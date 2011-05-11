@@ -26,6 +26,7 @@ namespace QQn.SourceServerSharp.Framework
 		public SourceFile(string filename)
 			: base(filename)
 		{
+			this.SourceAvailable = true;
 		}
 
 		/// <summary>
@@ -44,18 +45,13 @@ namespace QQn.SourceServerSharp.Framework
 		/// <summary>
 		/// Gets a value indicating whether a source-reference has been found
 		/// </summary>
-		/// <value><c>true</c> when a <see cref="SourceReference"/> is available or when <see cref="NoSourceAvailable"/> is set, otherwise <c>false</c></value>
+		/// <value><c>true</c> when a <see cref="SourceReference"/> is available or when <see cref="SourceAvailable"/> is set, otherwise <c>false</c></value>
 		public bool IsResolved
 		{
-			get { return (this.SourceReference != null) || this.NoSourceAvailable; }
+			get { return this.SourceReference != null && this.SourceAvailable; }
 		}
 
-		/// <summary>
-		/// Gets or sets a boolean indicating no source is available
-		/// </summary>
-		/// <remarks>SourceProviders should set this property to true for files other <see cref="SourceProvider"/>s don't 
-		/// need to look for, but don't have a <see cref="SourceReference"/></remarks>
-		public bool NoSourceAvailable { get; set; }
+		public bool SourceAvailable { get; set; }
 		
 		internal void AddContainer(SymbolFile symbolFile)
 		{

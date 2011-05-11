@@ -331,10 +331,10 @@ namespace QQn.SourceServerSharp
 						if (fileName.StartsWith(roots[n - 1], StringComparison.InvariantCultureIgnoreCase))
 							continue; // Root found
 
-						sf.NoSourceAvailable = true;
+						sf.SourceAvailable = false;
 					}
 					else
-						sf.NoSourceAvailable = true;
+						sf.SourceAvailable = false;
 				}
 			}
 			#endregion - Apply SourceRoots
@@ -370,7 +370,7 @@ namespace QQn.SourceServerSharp
 					if ((n > 0) && (n <= roots.Length))
 					{
 						if (fileName.StartsWith(roots[n - 1], StringComparison.InvariantCultureIgnoreCase))
-							sf.NoSourceAvailable = true;
+							sf.SourceAvailable = false;
 					}
 				}
 			}

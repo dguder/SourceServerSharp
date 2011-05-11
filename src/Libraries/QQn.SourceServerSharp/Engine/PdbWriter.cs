@@ -56,19 +56,14 @@ namespace QQn.SourceServerSharp.Engine
 			var providers = new SortedList<string, SourceProvider>();
 			var itemCount = 1;
 
-			foreach (var sf in file.SourceFiles)
+			var available = file.SourceFiles
+				.Where(x => x.IsResolved)
+				.Select(x => x.SourceReference.SourceProvider)
+				.Where(x => !providers.ContainsKey(x.Id));
+
+			foreach (var provider in available)
 			{
-				if (!sf.IsResolved || sf.NoSourceAvailable)
-					continue;
-
-				var sr = sf.SourceReference;
-				var provider = sr.SourceProvider;
-
-				if (providers.ContainsKey(provider.Id))
-					continue;
-
 				providers.Add(provider.Id, provider);
-
 				if (provider.SourceEntryVariableCount > itemCount)
 					itemCount = provider.SourceEntryVariableCount;
 			}
@@ -86,7 +81,7 @@ namespace QQn.SourceServerSharp.Engine
 			sw.WriteLine("SRCSRV: source files ---------------------------------------");
 
 			var files = file.SourceFiles
-				.Where(x => x.IsResolved && !x.NoSourceAvailable)
+				.Where(x => x.IsResolved)
 				.Select(x => x.SourceReference.GetSourceEntries());
 
 			foreach (var values in files)
