@@ -3,123 +3,58 @@
 // * $HeadURL: http://sourceserversharp.googlecode.com/svn/trunk/src/Libraries/QQn.SourceServerSharp/Framework/SourceFileBase.cs $
 // **************************************************************************
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.IO;
-
 namespace QQn.SourceServerSharp.Framework
 {
-	/// <summary>
-	/// Baseclass for <see cref="SourceFile"/> and <see cref="SymbolFile"/>
-	/// </summary>
+	using System;
+	using System.IO;
+
 	public abstract class SourceFileBase : IComparable
 	{
-		readonly FileInfo _fileInfo;
-
-		/// <summary>
-		/// Creates a new SourceFile object for the specified file
-		/// </summary>
-		/// <param name="filename"></param>
 		protected SourceFileBase(string filename)
 		{
 			if (string.IsNullOrEmpty(filename))
 				throw new ArgumentNullException("filename");
 
-			_fileInfo = new FileInfo(filename);
+			this.File = new FileInfo(filename);
 		}
 
-		/// <summary>
-		/// 
-		/// </summary>
-		public FileInfo File
-		{
-			get { return _fileInfo; }
-		}
-
-		/// <summary>
-		/// Gets the fullname of the file
-		/// </summary>
+		public FileInfo File { get; private set; }
 		public string FullName
 		{
-			get { return File.FullName; }
+			get { return this.File.FullName; }
 		}
-
-		/// <summary>
-		/// Gets a (cached) boolean indicating whether the file exists on disk
-		/// </summary>
 		public bool Exists
 		{
-			get { return File.Exists; }
+			get { return this.File.Exists; }
 		}
-
-		/// <summary>
-		/// returns <see cref="FullName"/>
-		/// </summary>
-		/// <returns></returns>
 		public override string ToString()
 		{
-			return FullName;
+			return this.FullName;
 		}
 
-		#region ## Compare members (specialized by base classes; for generics)
-
-		/// <summary>
-		/// Compares two <see cref="SourceFile"/> by its <see cref="FullName"/>
-		/// </summary>
-		/// <param name="other"></param>
-		/// <returns></returns>
 		public int CompareTo(SourceFileBase other)
 		{
-			return string.Compare(FullName, other.FullName, StringComparison.InvariantCultureIgnoreCase);
+			return string.Compare(this.FullName, other.FullName, StringComparison.InvariantCultureIgnoreCase);
 		}
 
-		/// <summary>
-		/// Compares two <see cref="SourceFile"/> by its <see cref="FullName"/>
-		/// </summary>
-		/// <param name="other"></param>
-		/// <returns></returns>
 		public bool Equals(SourceFileBase other)
 		{
-			if (other == null)
-				return false;
-
-			return string.Equals(FullName, other.FullName, StringComparison.InvariantCultureIgnoreCase);
+			return other != null && string.Equals(this.FullName, other.FullName, StringComparison.InvariantCultureIgnoreCase);
 		}
 
-		#endregion ## Compare members (specialized by base classes; for generics)
-
-		#region ## .Net 1.X compatible compare Members
-
-		/// <summary>
-		/// Compares two <see cref="SourceFile"/> by its <see cref="FullName"/>
-		/// </summary>
-		/// <param name="obj"></param>
-		/// <returns></returns>
 		public int CompareTo(object obj)
 		{
-			// Use typed version
-			return CompareTo(obj as SourceFileBase);
+			return this.CompareTo(obj as SourceFileBase);
 		}
 
-		/// <summary>
-		/// Compares two <see cref="SourceFile"/> by its <see cref="FullName"/>
-		/// </summary>
-		/// <param name="obj"></param>
-		/// <returns></returns>
 		public override bool Equals(object obj)
 		{
-			return Equals(obj as SourceFileBase);
+			return this.Equals(obj as SourceFileBase);
 		}
-		#endregion ## .Net 1.X compatible compare Members
 
-		/// <summary>
-		/// Gets the hashcode of the <see cref="SourceFile"/>
-		/// </summary>
-		/// <returns></returns>
 		public override int GetHashCode()
 		{
-			return StringComparer.InvariantCultureIgnoreCase.GetHashCode(FullName);
+			return StringComparer.InvariantCultureIgnoreCase.GetHashCode(this.FullName);
 		}
 	}
 }

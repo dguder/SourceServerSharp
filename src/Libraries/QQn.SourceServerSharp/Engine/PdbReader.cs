@@ -1,40 +1,24 @@
-// **************************************************************************
-// * $Id: PdbReader.cs 39 2006-12-17 10:24:58Z bhuijben $
-// * $HeadURL: http://sourceserversharp.googlecode.com/svn/trunk/src/Libraries/QQn.SourceServerSharp/Engine/PdbReader.cs $
-// **************************************************************************
-
-using System;
-using System.Collections.Generic;
-using System.Text;
-using QQn.SourceServerSharp.Framework;
-using System.Diagnostics;
-
 namespace QQn.SourceServerSharp.Engine
 {
-	/// <summary>
-	/// PdbReader class; this class should be re-implemented using only the DbgHelp api, to optimize performance
-	/// and remove a dependency on the Debugger SDK
-	/// </summary>
-	static class PdbReader
+	using System.Collections.Generic;
+	using System.Diagnostics;
+	using Framework;
+
+	internal static class PdbReader
 	{
-		/// <summary>
-		/// Reads all sourcefiles referenced from a PDB, and adds these to the indexerstate
-		/// </summary>
-		/// <param name="state"></param>
-		/// <param name="srcToolPath"></param>
-		/// <param name="reIndexPreviouslyIndexedSymbols"></param>
-		public static void ReadSourceFilesFromPdbs(IndexerState state, string srcToolPath, bool reIndexPreviouslyIndexedSymbols)
+		public static void ReadSourceFilesFromPdbs(
+			IndexerState state, string srcToolPath, bool reIndexPreviouslyIndexedSymbols)
 		{
 			List<SymbolFile> pdbsToRemove = null;
-			foreach (SymbolFile pdb in state.SymbolFiles.Values)
+			foreach (var pdb in state.SymbolFiles.Values)
 			{
-				ProcessStartInfo psi = new ProcessStartInfo(srcToolPath);
-
-				psi.WorkingDirectory = pdb.File.DirectoryName;
-
-				psi.UseShellExecute = false;
-				psi.RedirectStandardError = true;
-				psi.RedirectStandardOutput = true;
+				var psi = new ProcessStartInfo(srcToolPath)
+				{
+					WorkingDirectory = pdb.File.DirectoryName,
+					UseShellExecute = false,
+					RedirectStandardError = true,
+					RedirectStandardOutput = true
+				};
 
 				string output;
 				string errors;
@@ -43,7 +27,7 @@ namespace QQn.SourceServerSharp.Engine
 				{
 					psi.Arguments = string.Format("-c \"{0}\"", pdb.FullName);
 
-					using (Process p = Process.Start(psi))
+					using (var p = Process.Start(psi))
 					{
 						output = p.StandardOutput.ReadToEnd();
 						errors = p.StandardError.ReadToEnd();
@@ -52,9 +36,9 @@ namespace QQn.SourceServerSharp.Engine
 					}
 
 					if (output.Contains("source files are indexed") ||
-						errors.Contains("source files are indexed") ||
-						output.Contains("source file is indexed") ||
-						errors.Contains("source file is indexed"))
+					    errors.Contains("source files are indexed") ||
+					    output.Contains("source file is indexed") ||
+					    errors.Contains("source file is indexed"))
 					{
 						// No need to change annotation; it is already indexed
 						if (pdbsToRemove == null)
@@ -67,7 +51,7 @@ namespace QQn.SourceServerSharp.Engine
 
 				psi.Arguments = string.Format("-r \"{0}\"", pdb.FullName);
 
-				using (Process p = Process.Start(psi))
+				using (var p = Process.Start(psi))
 				{
 					output = p.StandardOutput.ReadToEnd();
 					errors = p.StandardError.ReadToEnd();
@@ -76,20 +60,18 @@ namespace QQn.SourceServerSharp.Engine
 				}
 
 				if (!string.IsNullOrEmpty(errors))
-				{
 					throw new SourceIndexToolException("SRCTOOL", errors.Trim());
-				}
 
-				bool foundOne = false;
-				foreach (string item in output.Split('\r', '\n'))
+				var foundOne = false;
+				foreach (var item in output.Split('\r', '\n'))
 				{
-					string fileName = item.Trim();
+					var fileName = item.Trim();
 
 					if (string.IsNullOrEmpty(fileName))
 						continue; // We split on \r and \n
 
 					if ((fileName.IndexOf('*') >= 0) || // C++ Compiler internal file
-						((fileName.Length > 2) && (fileName.IndexOf(':', 2) >= 0)))
+					    ((fileName.Length > 2) && (fileName.IndexOf(':', 2) >= 0)))
 					{
 						// Some compiler internal filenames of C++ start with a * 
 						// and/or have a :123 suffix
@@ -110,25 +92,22 @@ namespace QQn.SourceServerSharp.Engine
 					pdb.AddSourceFile(file);
 					file.AddContainer(pdb);
 					foundOne = true;
-
 				}
 
-				if (!foundOne)
-				{
-					if (pdbsToRemove == null)
-						pdbsToRemove = new List<SymbolFile>();
+				if (foundOne)
+					continue;
 
-					pdbsToRemove.Add(pdb);
-				}
+				if (pdbsToRemove == null)
+					pdbsToRemove = new List<SymbolFile>();
+
+				pdbsToRemove.Add(pdb);
 			}
 
-			if (pdbsToRemove != null)
-			{
-				foreach (SymbolFile s in pdbsToRemove)
-				{
-					state.SymbolFiles.Remove(s.FullName);
-				}
-			}
+			if (pdbsToRemove == null)
+				return;
+
+			foreach (var s in pdbsToRemove)
+				state.SymbolFiles.Remove(s.FullName);
 		}
 	}
 }

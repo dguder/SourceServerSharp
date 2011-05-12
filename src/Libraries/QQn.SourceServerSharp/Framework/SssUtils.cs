@@ -1,34 +1,19 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.IO;
-
 namespace QQn.SourceServerSharp.Framework
 {
-	static class SssUtils
+	using System;
+	using System.IO;
+	using System.Linq;
+
+	internal static class SssUtils
 	{
 		public static string FindExecutable(string name)
 		{
-			string systemPath = Environment.GetEnvironmentVariable("PATH");
+			var systemPath = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
 
-			if (systemPath == null)
-				systemPath = "";
-
-			// Search all directories in path
-			foreach (string pathItem in systemPath.Split(Path.PathSeparator))
-			{
-				string item = pathItem.Trim();
-
-				if (!Directory.Exists(item))
-					continue;
-
-				string file = Path.GetFullPath(Path.Combine(item, name));
-
-				if (File.Exists(file))
-					return Path.GetFullPath(file);
-			}
-
-			return null;
+			return (from pathItem in systemPath.Split(Path.PathSeparator)
+			        select pathItem.Trim()
+			        into item where Directory.Exists(item) select Path.GetFullPath(Path.Combine(item, name))
+			        into file where File.Exists(file) select Path.GetFullPath(file)).FirstOrDefault();
 		}
 	}
 }

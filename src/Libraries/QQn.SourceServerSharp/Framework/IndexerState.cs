@@ -1,80 +1,32 @@
-// **************************************************************************
-// * $Id: IndexerState.cs 40 2006-12-17 12:54:18Z bhuijben $
-// * $HeadURL: http://sourceserversharp.googlecode.com/svn/trunk/src/Libraries/QQn.SourceServerSharp/Framework/IndexerState.cs $
-// **************************************************************************
-
-using System;
-using System.Collections.Generic;
-using System.Text;
-using QQn.SourceServerSharp.Framework;
-using QQn.SourceServerSharp.Providers;
-using System.IO;
-
 namespace QQn.SourceServerSharp.Framework
 {
-	/// <summary>
-	/// 
-	/// </summary>
+	using System;
+	using System.Collections.Generic;
+	using System.IO;
+	using System.Text;
+	using Providers;
+
 	public sealed class IndexerState
 	{
-		readonly SortedList<string, SymbolFile> _symbolFiles = new SortedList<string,SymbolFile>(StringComparer.InvariantCultureIgnoreCase);
-		readonly SortedList<string, SourceFile> _sourceFiles = new SortedList<string, SourceFile>(StringComparer.InvariantCultureIgnoreCase);
-		readonly SortedList<string, SourceProvider> _srcProviders = new SortedList<string, SourceProvider>(StringComparer.InvariantCultureIgnoreCase);
-		readonly List<SourceResolver> _resolvers = new List<SourceResolver>();
-		IDictionary<string, IndexerTypeData> _resolverData = new SortedList<string, IndexerTypeData>(StringComparer.InvariantCultureIgnoreCase);
+		private readonly SortedList<string, SourceProvider> srcProviders = new SortedList<string, SourceProvider>(StringComparer.InvariantCultureIgnoreCase);
+		private IDictionary<string, IndexerTypeData> resolverData = new SortedList<string, IndexerTypeData>(StringComparer.InvariantCultureIgnoreCase);
 
-		/// <summary>
-		/// 
-		/// </summary>
 		public IndexerState()
 		{
+			this.Resolvers = new List<SourceResolver>();
+			this.SourceFiles = new SortedList<string, SourceFile>(StringComparer.InvariantCultureIgnoreCase);
+			this.SymbolFiles = new SortedList<string, SymbolFile>(StringComparer.InvariantCultureIgnoreCase);
 		}
 
-		/// <summary>
-		/// 
-		/// </summary>
-		public SortedList<string, SymbolFile> SymbolFiles
-		{
-			get { return _symbolFiles; }
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		public SortedList<string, SourceFile> SourceFiles
-		{
-			get { return _sourceFiles; }
-		}
-
-
-		/// <summary>
-		/// 
-		/// </summary>
+		public SortedList<string, SymbolFile> SymbolFiles { get; private set; }
+		public SortedList<string, SourceFile> SourceFiles { get; private set; }
+		public List<SourceResolver> Resolvers { get; private set; }
 		public IDictionary<string, IndexerTypeData> ResolverData
 		{
-			get { return _resolverData; }
-			set 
-			{ 
-				if(value != null)
-					_resolverData = value; 
-				else
-					_resolverData = new SortedList<string, IndexerTypeData>(StringComparer.InvariantCultureIgnoreCase);
-			}
+			get { return this.resolverData; }
+			set { this.resolverData = value ?? new SortedList<string, IndexerTypeData>(StringComparer.InvariantCultureIgnoreCase); }
 		}
 
-		/// <summary>
-		/// 
-		/// </summary>
-		public List<SourceResolver> Resolvers
-		{
-			get { return _resolvers; }
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="path"></param>
-		/// <returns></returns>
 		public string NormalizePath(string path)
 		{
 			if (path == null)
@@ -87,10 +39,9 @@ namespace QQn.SourceServerSharp.Framework
 
 			return path;
 		}
-
-		static string SafeId(string name)
+		private static string SafeId(string name)
 		{
-			StringBuilder sb = new StringBuilder();
+			var sb = new StringBuilder();
 
 			if (name.Length > 0)
 			{
@@ -99,37 +50,38 @@ namespace QQn.SourceServerSharp.Framework
 				else
 					sb.Append(name[0]);
 
-				for (int i = 1; i < name.Length; i++)
+				for (var i = 1; i < name.Length; i++)
+				{
 					if (char.IsLetterOrDigit(name, i))
 						sb.Append(char.ToUpperInvariant(name[i]));
+				}
 			}
 			else
 				return "PRV";
-			
+
 			return sb.ToString();
 		}
-
 		internal string AssignId(SourceProvider sp, string name)
 		{
-			if (_srcProviders.ContainsValue(sp))
+			if (this.srcProviders.ContainsValue(sp))
 				return sp.Id;
 
-			string id = SafeId(name);
+			var id = SafeId(name);
 
-			if (_srcProviders.ContainsKey(name))
+			if (this.srcProviders.ContainsKey(name))
 			{
 				string tmpId;
-				int i=0;
+				var i = 0;
 				do
 				{
 					tmpId = string.Format("{0}{1:X}", id, i++);
 				}
-				while (_srcProviders.ContainsKey(tmpId));
+				while (this.srcProviders.ContainsKey(tmpId));
 
 				id = tmpId;
 			}
 
-			_srcProviders.Add(id, sp);
+			this.srcProviders.Add(id, sp);
 
 			return id;
 		}

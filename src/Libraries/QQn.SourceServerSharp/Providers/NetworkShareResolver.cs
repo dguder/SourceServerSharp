@@ -7,7 +7,8 @@ namespace QQn.SourceServerSharp.Providers
 	using System.Security.Cryptography;
 	using Framework;
 
-	public class NetworkShareResolver : SourceResolver, ISourceProviderDetector
+	public class NetworkShareResolver : SourceResolver,
+		ISourceProviderDetector
 	{
 		private static readonly IDictionary<string, SourceReference> References =
 			new Dictionary<string, SourceReference>();
@@ -67,13 +68,15 @@ namespace QQn.SourceServerSharp.Providers
 		private static byte[] ComputeHash(string filename)
 		{
 			using (HashAlgorithm algorithm = new SHA1Managed())
-			using (Stream inputStream = new FileStream(filename, FileMode.Open, FileAccess.Read))
-				return algorithm.ComputeHash(inputStream);
+			{
+				using (Stream inputStream = new FileStream(filename, FileMode.Open, FileAccess.Read))
+					return algorithm.ComputeHash(inputStream);
+			}
 		}
 		private static string FormatHash(byte[] raw)
 		{
 			var hash = BitConverter.ToString(raw);
-			hash = hash.ToLowerInvariant().Replace("-", "");
+			hash = hash.ToLowerInvariant().Replace("-", string.Empty);
 			return hash.Substring(0, 3) + "\\" + hash.Substring(3, 3) + "\\" + hash.Substring(6);
 		}
 
@@ -83,7 +86,7 @@ namespace QQn.SourceServerSharp.Providers
 			if (string.IsNullOrEmpty(replicationPath))
 				return;
 
-			var destination = Path.Combine(replicationPath, hash, Path.GetFileName(filename) ?? string.Empty);
+			var destination = Path.Combine(replicationPath, this.hash, Path.GetFileName(this.filename) ?? string.Empty);
 			if (File.Exists(destination))
 				return;
 
@@ -95,7 +98,7 @@ namespace QQn.SourceServerSharp.Providers
 
 		public override string[] GetSourceEntries()
 		{
-			return new[] { this.filename, hash };
+			return new[] { this.filename, this.hash };
 		}
 	}
 }

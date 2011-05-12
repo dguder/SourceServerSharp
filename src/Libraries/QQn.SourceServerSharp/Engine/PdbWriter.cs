@@ -1,8 +1,3 @@
-// **************************************************************************
-// * $Id: PdbWriter.cs 39 2006-12-17 10:24:58Z bhuijben $
-// * $HeadURL: http://sourceserversharp.googlecode.com/svn/trunk/src/Libraries/QQn.SourceServerSharp/Engine/PdbWriter.cs $
-// **************************************************************************
-
 namespace QQn.SourceServerSharp.Engine
 {
 	using System;
